@@ -5,6 +5,10 @@ use warnings;
 
 use Getopt::Long;
 use IO::Socket::INET;
+use Pod::Usage;
+
+my $help = 0;
+my $man = 0;
 
 my $server = '10.0.200.2';
 my $port = '27960';
@@ -12,13 +16,19 @@ my $port = '27960';
 my $msg = "\xFF\xFF\xFF\xFF\x02getstatus\x0a\x00";
 
 my $result = GetOptions ("server=s" => \$server,
-                      "port=s" => \$port);
+                         "port=s"   => \$port,
+                         "help"     => \$help,
+                         "man"      => \$man
+              );
+
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 my $socket = new IO::Socket::INET (
     PeerAddr   => $server,
     PeerPort => $port,
     Proto => 'udp',
-    Blocking=>0
+    Blocking => 0
 ) or die 'ERROR in Socket Creation : '.$!."\n";
 
 $socket->send($msg);
@@ -94,3 +104,48 @@ if($data){
 }
 
 $socket->close();
+
+__END__
+
+=head1 NAME
+
+pollQ3a.pl - Polls a Quake 3 Arena Server
+
+=head1 SYNOPSIS
+
+pollQ3a.pl [options]
+
+ Options:
+   -server          server address
+   -port            server port
+   -help            brief help message
+   -man             full documentation
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-server>
+
+Set the server address.
+
+=item B<-port>
+
+Set the server port.
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+B<This program> will poll a Quake 3: Arena Server and return some status informations.
+The address and port can be specified.
+
+=cut
