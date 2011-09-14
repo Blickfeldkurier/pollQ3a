@@ -1,0 +1,12 @@
+pollQ3a.pl README
+
+pollQ3a is a tool to poll a Quake 3: Arena server and recive some informations from him.
+
+Installation:
+- Change the address and port for the default connection in the .pl file.
+- chmod +x pollQ3a.pl
+- Maybe move it to /usr/local/bin 
+
+Usage:
+    pollQ3a.pl --man
+
