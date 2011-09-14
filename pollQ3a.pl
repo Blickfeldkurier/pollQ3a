@@ -7,23 +7,29 @@ use Getopt::Long;
 use IO::Socket::INET;
 use Pod::Usage;
 
+# for documentation 
 my $help = 0;
 my $man = 0;
 
+# set default server and port
 my $server = '10.0.200.2';
 my $port = '27960';
 
+# message to send to quake server
 my $msg = "\xFF\xFF\xFF\xFF\x02getstatus\x0a\x00";
 
+# get all the options from the command line
 my $result = GetOptions ("server=s" => \$server,
                          "port=s"   => \$port,
                          "help"     => \$help,
                          "man"      => \$man
               );
 
+# display help 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
+# create a new nonblocking socket
 my $socket = new IO::Socket::INET (
     PeerAddr   => $server,
     PeerPort => $port,
@@ -31,12 +37,16 @@ my $socket = new IO::Socket::INET (
     Blocking => 0
 ) or die 'ERROR in Socket Creation : '.$!."\n";
 
+# send the message to the server
 $socket->send($msg);
 
+# idle some small amount of time.
 sleep(1);
 
+# all recived data
 my $data = '';
 
+# catch all data comming our way
 for(my $c=0; $c <= 42; $c++){
     
     my  $tmp = <$socket>;
@@ -45,18 +55,25 @@ for(my $c=0; $c <= 42; $c++){
     }
 }
 
-if($data){
-    my @parstrings = split('\n', $data);   
-    my @serverdata = split('\\\\', $parstrings[1]);    
-    my %serverinfo;
+# close the socket
+$socket->close();
 
-    for(my $i=1; $i <= $#serverdata; $i=$i+2){
+# process recived data
+if($data){
+    my @parstrings = split('\n', $data); # split the server info from the player info  
+    my @serverdata = split('\\\\', $parstrings[1]); # split the server info 
+    my %serverinfo; # hash holding all status variables
+
+    # fill the %serverinfo hash
+    for(my $i=1; $i <= $#serverdata; $i=$i+2){ # $i is the key, $i+1 the value
         $serverinfo{$serverdata[$i]} = $serverdata[$i+1];
-        #print $serverdata[$i]."\n";
     }
+
+    #print hostname + mapname
     print "Server ".$serverinfo{'sv_hostname'}.":\n";
     print "\tMap: ".$serverinfo{'mapname'}."\n";
     
+    # print gametype acording to g_gametype
     my $gametype; 
     if($serverinfo{'g_gametype'} eq '0'){
         $gametype = 'FreeForAll';
@@ -76,6 +93,7 @@ if($data){
     
     print "\tGametype: ".$gametype. "\n";
     
+    # print either the capture limit or the frag limit, depending on gametype
     if($serverinfo{'g_gametype'} eq '4'){
         print "\tCapture Limit: ".$serverinfo{'capturelimit'}."\n";
     }else{
@@ -83,15 +101,21 @@ if($data){
         
     }
     
+    # print time limit
     print "\tTime Limit: ".$serverinfo{'timelimit'}."\n";
 
+    # inform the user if the server is password protected
     if($serverinfo{'g_needpass'} ne '0'){    
         print "\tGame is password protected!\n";
     } 
     
+    #print the free slots 
+    # Nummber of current players = parstrings length -2 
+    # (0,1 are server stats. The rest are player data) 
     print "\tFree Slots: ".( $serverinfo{'sv_maxclients'} - ($#parstrings - 2)). " / " .  $serverinfo{'sv_maxclients'} . "\n";
-
     print "\n";
+
+    # Print Player informations
     if($#parstrings > 2){
         print("Players:\n");
         for(my $c=2; $c <= $#parstrings; $c++){
@@ -99,11 +123,11 @@ if($data){
             print "\tName: ".$player[2]." Frags: ". $player[0]." Ping: ". $player[1]."\n";
         }
     }
-}else{
+}else{# if $data is empty, there is no server available
     print "Server not available\n";
 }
 
-$socket->close();
+exit 0;
 
 __END__
 
