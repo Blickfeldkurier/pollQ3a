@@ -15,12 +15,15 @@ my $man = 0;
 my $server = '10.0.200.2';
 my $port = '27960';
 
+my $exec = '';
+
 # message to send to quake server
 my $msg = "\xFF\xFF\xFF\xFF\x02getstatus\x0a\x00";
 
 # get all the options from the command line
 my $result = GetOptions ("server=s" => \$server,
                          "port=s"   => \$port,
+                         "exec=s"   => \$exec,
                          "help"     => \$help,
                          "man"      => \$man
               );
@@ -123,6 +126,15 @@ if($data){
             print "\tName: ".$player[2]." Frags: ". $player[0]." Ping: ". $player[1]."\n";
         }
     }
+
+    #if exec string is given replace the server, port and run the thing
+    if($exec){
+        $exec =~ s/\$server/$server/;
+        $exec =~ s/\$port/$port/;
+        print ("Execute: ".$exec."\n");
+        exec($exec);
+    }
+
 }else{# if $data is empty, there is no server available
     print "Server not available\n";
 }
@@ -142,6 +154,7 @@ pollQ3a.pl [options]
  Options:
    -server          server address
    -port            server port
+   -exec            execute command if server is available
    -help            brief help message
    -man             full documentation
 
@@ -156,6 +169,10 @@ Set the server address.
 =item B<-port>
 
 Set the server port.
+
+=item B<-exec>
+
+Execute the given command if the server is available. $server and $port will replaced with address and port.
 
 =item B<-help>
 
